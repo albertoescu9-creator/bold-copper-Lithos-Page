@@ -2,45 +2,132 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>GroundedAI Prototype Hub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GroundedAI — Prototype Hub</title>
 
 <style>
 
+:root{
+--bg:#0e0e0e;
+--card:#141414;
+--text:#f5f3ee;
+--muted:rgba(245,243,238,.65);
+--rule:rgba(245,243,238,.12);
+--accent:#FCA311;
+--accent2:#A0614A;
+--ok:#48A050;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
 body{
-font-family:Arial, sans-serif;
-background:#0e0e0e;
-color:#f5f3ee;
-padding:50px;
-max-width:900px;
+font-family:system-ui,Arial;
+background:var(--bg);
+color:var(--text);
+padding:44px 18px 80px;
+}
+
+.wrap{
+max-width:1040px;
 margin:auto;
 }
 
 h1{
+font-size:28px;
+margin-bottom:8px;
+}
+
+.sub{
+color:var(--muted);
 margin-bottom:30px;
 }
 
-h2{
-margin-top:40px;
-color:#FCA311;
+.grid{
+display:grid;
+grid-template-columns:1.2fr .8fr;
+gap:16px;
 }
 
-a{
-display:block;
-margin:10px 0;
-padding:14px 18px;
-background:#1f1f1f;
-color:#FCA311;
-text-decoration:none;
-border-radius:6px;
-transition:0.2s;
+.card{
+background:var(--card);
+border:1px solid var(--rule);
+border-radius:14px;
+padding:18px;
 }
 
-a:hover{
-background:#2c2c2c;
+.card h2{
+font-size:14px;
+letter-spacing:.12em;
+text-transform:uppercase;
+color:var(--muted);
+margin-bottom:16px;
 }
 
 .section{
-margin-bottom:35px;
+margin-top:16px;
+border-top:1px solid var(--rule);
+padding-top:16px;
+}
+
+.label{
+font-size:12px;
+color:var(--muted);
+margin-bottom:12px;
+}
+
+.list{
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+a.item{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:12px 14px;
+border-radius:10px;
+border:1px solid var(--rule);
+text-decoration:none;
+color:var(--text);
+background:#1a1a1a;
+}
+
+a.item:hover{
+background:#222;
+}
+
+.title{
+font-weight:600;
+}
+
+.desc{
+font-size:12px;
+color:var(--muted);
+}
+
+.tags{
+display:flex;
+gap:6px;
+}
+
+.tag{
+font-size:10px;
+padding:4px 8px;
+border-radius:999px;
+border:1px solid var(--rule);
+color:var(--muted);
+}
+
+.tag.light{color:#FCA311}
+.tag.dark{color:#f5f3ee}
+.tag.copper{color:#C4856E}
+.tag.bold{color:#FCA311}
+
+.footer{
+margin-top:20px;
+color:var(--muted);
+font-size:12px;
 }
 
 </style>
@@ -48,91 +135,184 @@ margin-bottom:35px;
 
 <body>
 
-<h1>GroundedAI – Prototype & Design Hub</h1>
+<div class="wrap">
+
+<h1>GroundedAI — Prototype Hub</h1>
+<p class="sub">
+Quick access to design explorations, product pages, and brand guidelines.
+</p>
+
+<div class="grid">
+
+<!-- LEFT SIDE -->
+
+<div class="card">
+
+<h2>Pages</h2>
 
 <div class="section">
+<div class="label">Homepage Concepts</div>
 
-<h2>Homepage Concepts</h2>
+<div class="list">
 
-<a href="groundedai_homepage_light.html">
-Homepage – Light
+<a class="item" href="groundedai_homepage_light.html">
+<div>
+<div class="title">Homepage — Light</div>
+<div class="desc">Baseline palette</div>
+</div>
+<div class="tags"><span class="tag light">Light</span></div>
 </a>
 
-<a href="groundedai_homepage_dark.html">
-Homepage – Dark
+<a class="item" href="groundedai_homepage_dark.html">
+<div>
+<div class="title">Homepage — Dark</div>
+<div class="desc">Baseline palette</div>
+</div>
+<div class="tags"><span class="tag dark">Dark</span></div>
 </a>
 
-<a href="groundedai_homepage_v3_light.html">
-Homepage – V3 Light
+<a class="item" href="groundedai_homepage_v3_light.html">
+<div>
+<div class="title">Homepage — V3 Light</div>
+<div class="desc">Updated structure</div>
+</div>
+<div class="tags"><span class="tag light">Light</span></div>
 </a>
 
-<a href="groundedai_homepage_v3_dark.html">
-Homepage – V3 Dark
+<a class="item" href="groundedai_homepage_v3_dark.html">
+<div>
+<div class="title">Homepage — V3 Dark</div>
+<div class="desc">Updated structure</div>
+</div>
+<div class="tags"><span class="tag dark">Dark</span></div>
 </a>
 
-<a href="groundedai_homepage_copper_light.html">
-Homepage – Copper Light
+<a class="item" href="groundedai_homepage_copper_light.html">
+<div>
+<div class="title">Homepage — Copper Light</div>
+<div class="desc">Earthy copper exploration</div>
+</div>
+<div class="tags">
+<span class="tag light">Light</span>
+<span class="tag copper">Copper</span>
+</div>
 </a>
 
-<a href="groundedai_homepage_copper_dark.html">
-Homepage – Copper Dark
+<a class="item" href="groundedai_homepage_copper_dark.html">
+<div>
+<div class="title">Homepage — Copper Dark</div>
+<div class="desc">Earthy copper exploration</div>
+</div>
+<div class="tags">
+<span class="tag dark">Dark</span>
+<span class="tag copper">Copper</span>
+</div>
 </a>
 
-<a href="groundedai_homepage_bold_copper_light.html">
-Homepage – Bold Copper Light
+<a class="item" href="groundedai_homepage_bold_copper_light.html">
+<div>
+<div class="title">Homepage — Bold Copper Light</div>
+<div class="desc">High contrast copper</div>
+</div>
+<div class="tags">
+<span class="tag light">Light</span>
+<span class="tag bold">Bold Copper</span>
+</div>
 </a>
 
-<a href="groundedai_homepage_bold_copper_dark.html">
-Homepage – Bold Copper Dark
+<a class="item" href="groundedai_homepage_bold_copper_dark.html">
+<div>
+<div class="title">Homepage — Bold Copper Dark</div>
+<div class="desc">High contrast copper</div>
+</div>
+<div class="tags">
+<span class="tag dark">Dark</span>
+<span class="tag bold">Bold Copper</span>
+</div>
 </a>
 
 </div>
-
+</div>
 
 <div class="section">
+<div class="label">Product / Solution Pages</div>
 
-<h2>Product / Solution Pages</h2>
+<div class="list">
 
-<a href="groundedai_lithos_page.html">
-Lithos Page Prototype
+<a class="item" href="groundedai_lithos_page.html">
+<div>
+<div class="title">Lithos Page Prototype</div>
+<div class="desc">Product page exploration</div>
+</div>
 </a>
 
 </div>
-
+</div>
 
 <div class="section">
+<div class="label">Tools / Interactive Assets</div>
+
+<div class="list">
+
+<a class="item" href="groundedai_readiness_check.html">
+<div>
+<div class="title">GroundedAI Readiness Check</div>
+<div class="desc">Interactive readiness assessment tool</div>
+</div>
+</a>
+
+</div>
+</div>
+
+</div>
+
+<!-- RIGHT SIDE -->
+
+<div class="card">
 
 <h2>Brand Guidelines</h2>
 
-<a href="option 1 groundedai_brand_guidelines (3).html">
-Brand Guidelines – Option 1
+<div class="list">
+
+<a class="item" href="option 1 groundedai_brand_guidelines (3).html">
+<div>
+<div class="title">Brand Guidelines — Option 1</div>
+<div class="desc">Original palette</div>
+</div>
 </a>
 
-<a href="option 2 groundedai_brand_guidelines.html">
-Brand Guidelines – Option 2
+<a class="item" href="option 2 groundedai_brand_guidelines.html">
+<div>
+<div class="title">Brand Guidelines — Option 2</div>
+<div class="desc">Alternative palette</div>
+</div>
 </a>
 
-<a href="groundedai_copper_brand_guidelines.html">
-Copper Brand Guidelines
+<a class="item" href="groundedai_copper_brand_guidelines.html">
+<div>
+<div class="title">Copper Brand Guidelines</div>
+<div class="desc">Earthy copper palette</div>
+</div>
 </a>
 
-<a href="groundedai_bold_copper_brand_guidelines.html">
-Bold Copper Brand Guidelines
+<a class="item" href="groundedai_bold_copper_brand_guidelines.html">
+<div>
+<div class="title">Bold Copper Brand Guidelines</div>
+<div class="desc">High contrast copper palette</div>
+</div>
 </a>
 
 </div>
 
-
-<div class="section">
-
-<h2>Tools / Interactive Assets</h2>
-
-<a href="groundedai_readiness_check.html">
-GroundedAI Readiness Check
-</a>
+<div class="footer">
+Tip: avoid spaces in filenames to prevent URL encoding issues.
+</div>
 
 </div>
 
+</div>
+
+</div>
 
 </body>
 </html>
