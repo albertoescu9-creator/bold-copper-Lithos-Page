@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workflow Readiness Check · GroundedAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black:      #0F110C;
+  --black2:     #161810;
+  --black3:     #1c1f15;
+  --black4:     #22261b;
+  --forest:     #687156;
+  --forest-dim: rgba(104,113,86,0.15);
+  --forest-mid: rgba(104,113,86,0.3);
+  --sage:       #90A97F;
+  --sage-dim:   rgba(144,169,127,0.12);
+  --sage-mid:   rgba(144,169,127,0.3);
+  --stone:      #80766C;
+  --amber:      #F4BB6E;
+  --amber-dim:  rgba(244,187,110,0.1);
+  --amber-mid:  rgba(244,187,110,0.28);
+  --amber-deep: #D9960A;
+  --white:      #FFFFFF;
+  --offwhite:   #E8EAE3;
+  --muted:      rgba(232,234,227,0.42);
+  --rule:       rgba(144,169,127,0.1);
+  --rule-faint: rgba(232,234,227,0.06);
+
+  /* Outcome colours */
+  --green:  #5CA865;
+  --yellow: #D4B84A;
+  --orange: #D4784A;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--black);
+  color: var(--offwhite);
+  font-family: 'Familjen Grotesk', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── BG GRID ── */
+.grid-bg {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(144,169,127,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(144,169,127,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.grid-fine {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(144,169,127,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(144,169,127,0.015) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+.ambient {
+  position: fixed; top: -200px; right: -150px; width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(244,187,110,0.06) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+.ambient-2 {
+  position: fixed; bottom: -200px; left: -150px; width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(104,113,86,0.07) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(15,17,12,0.94); backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--rule);
+  padding: 0 48px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo { display: flex; align-items: center; gap: 10px; }
+.logo-g {
+  width: 34px; height: 34px; border-radius: 7px;
+  background: var(--amber); color: var(--black);
+  font-weight: 700; font-size: 19px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 16px rgba(244,187,110,0.2);
+}
+.logo-name { font-weight: 700; font-size: 16px; color: var(--offwhite); letter-spacing: 0.3px; }
+.logo-name span { color: var(--amber); }
+.nav-tag {
+  font-size: 10px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--sage); padding: 4px 10px; border: 1px solid var(--rule);
+  border-radius: 3px; background: var(--sage-dim);
+}
+
+/* ── LAYOUT ── */
+.app-wrap {
+  position: relative; z-index: 1;
+  min-height: 100vh; padding-top: 60px;
+  display: flex; align-items: center; justify-content: center;
+}
+.screen {
+  width: 100%; max-width: 760px;
+  padding: 60px 40px;
+  display: none; flex-direction: column; align-items: center;
+  animation: fadeUp 0.5s both;
+}
+.screen.active { display: flex; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  width: 100%; max-width: 760px;
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  z-index: 99; padding: 0 40px;
+}
+.progress-inner {
+  height: 2px; background: var(--rule-faint); border-radius: 2px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--sage), var(--amber));
+  border-radius: 2px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  width: 0%;
+}
+.progress-labels {
+  display: flex; justify-content: space-between;
+  padding: 6px 0 0; margin-bottom: 0;
+}
+.progress-label {
+  font-size: 9px; font-weight: 500; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--muted); transition: color 0.3s;
+}
+.progress-label.active { color: var(--sage); }
+.progress-label.done { color: var(--amber); }
+
+/* ── EYEBROW ── */
+.eyebrow {
+  font-size: 10px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--sage); display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+}
+.eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--sage); }
+
+/* ── TITLES ── */
+.step-title {
+  font-size: 42px; font-weight: 700; line-height: 1.0;
+  letter-spacing: -1px; color: var(--white);
+  text-align: center; margin-bottom: 12px;
+}
+.step-title .amber { color: var(--amber); }
+.step-sub {
+  font-size: 16px; font-weight: 400; color: var(--muted);
+  text-align: center; line-height: 1.6; max-width: 520px; margin-bottom: 40px;
+}
+
+/* ── PROJECT NAME INPUT ── */
+.project-input-wrap { width: 100%; max-width: 500px; position: relative; margin-bottom: 12px; }
+.project-input {
+  width: 100%; background: var(--black2);
+  border: 1px solid var(--rule); border-radius: 8px;
+  padding: 18px 24px; color: var(--white);
+  font-family: 'Familjen Grotesk', sans-serif; font-size: 18px; font-weight: 400;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.2px;
+}
+.project-input::placeholder { color: var(--muted); }
+.project-input:focus { border-color: var(--sage); box-shadow: 0 0 0 3px rgba(144,169,127,0.1); }
+.project-hint {
+  font-size: 11px; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 32px; text-align: center;
+}
+.project-hint span { color: var(--stone); }
+
+/* ── BUTTONS ── */
+.btn {
+  font-family: 'Familjen Grotesk', sans-serif; font-weight: 700; font-size: 14px;
+  border: none; border-radius: 7px; cursor: pointer; transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 8px; letter-spacing: 0.2px;
+}
+.btn-amber {
+  padding: 16px 36px; background: var(--amber); color: var(--black);
+  box-shadow: 0 0 24px rgba(244,187,110,0.25);
+}
+.btn-amber:hover { opacity: 0.88; box-shadow: 0 0 36px rgba(244,187,110,0.45); transform: translateY(-1px); }
+.btn-amber:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+.btn-ghost {
+  padding: 14px 28px; background: transparent; color: var(--muted);
+  border: 1px solid var(--rule);
+}
+.btn-ghost:hover { border-color: var(--sage); color: var(--offwhite); }
+.btn-forest {
+  padding: 14px 28px; background: var(--forest); color: var(--white);
+  box-shadow: 0 4px 16px rgba(104,113,86,0.2);
+}
+.btn-forest:hover { background: #7a8564; box-shadow: 0 6px 24px rgba(104,113,86,0.35); transform: translateY(-1px); }
+.btn-sage {
+  padding: 14px 28px; background: transparent; color: var(--sage);
+  border: 1px solid var(--sage-mid);
+}
+.btn-sage:hover { background: var(--sage-dim); }
+
+.btn-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; margin-top: 36px; }
+
+/* ── CHECKBOX GRID ── */
+.check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.check-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+.check-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 16px 18px; background: var(--black2);
+  border: 1px solid var(--rule); border-radius: 10px; cursor: pointer;
+  transition: all 0.2s; user-select: none;
+}
+.check-item:hover { background: var(--black3); border-color: var(--forest-mid); }
+.check-item.selected { background: var(--black3); border-color: var(--sage); box-shadow: 0 0 0 1px var(--sage-dim); }
+.check-item.selected .check-box { background: var(--sage); border-color: var(--sage); }
+.check-item.selected .check-box::after { display: block; }
+.check-box {
+  width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--rule);
+  background: transparent; flex-shrink: 0; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.check-box::after {
+  content: ''; display: none; width: 5px; height: 9px;
+  border-right: 2px solid var(--black); border-bottom: 2px solid var(--black);
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+.check-label { font-size: 14px; font-weight: 500; color: var(--offwhite); line-height: 1.4; }
+.check-label small { display: block; font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+
+/* ── STEP COUNT ── */
+.step-count {
+  font-size: 10px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--stone); margin-bottom: 6px; text-align: center;
+}
+
+/* ── CALCULATION SCREEN ── */
+.calc-container { width: 100%; display: flex; flex-direction: column; align-items: center; }
+.calc-title { font-size: 32px; font-weight: 700; letter-spacing: -0.8px; color: var(--white); text-align: center; margin-bottom: 8px; }
+.calc-sub { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 48px; }
+
+.workflow-diagram { display: flex; align-items: center; gap: 0; width: 100%; justify-content: center; }
+.wf-node {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  flex: 1; padding: 20px 12px; border-radius: 10px;
+  background: var(--black2); border: 1px solid var(--rule);
+  position: relative; overflow: hidden;
+  transition: all 0.4s;
+}
+.wf-node.scoring { animation: pulse 1s infinite; }
+.wf-connector {
+  width: 28px; flex-shrink: 0; height: 1px; background: var(--rule);
+  position: relative; margin: 0 -1px;
+}
+.wf-connector::after {
+  content: ''; position: absolute; right: -3px; top: -4px;
+  border: 4px solid transparent; border-left-color: var(--rule);
+}
+.wf-node-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--stone);
+}
+.wf-node-icon { font-size: 22px; line-height: 1; }
+.wf-node-status {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  opacity: 0; transform: translateY(6px); transition: all 0.4s;
+}
+.wf-node.revealed .wf-node-status { opacity: 1; transform: translateY(0); }
+
+.wf-node.strong { border-color: var(--green); background: rgba(92,168,101,0.08); }
+.wf-node.strong .wf-node-label { color: var(--sage); }
+.wf-node.strong .wf-node-status { color: var(--green); }
+.wf-node.strong::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--green); }
+
+.wf-node.partial { border-color: var(--yellow); background: rgba(212,184,74,0.06); }
+.wf-node.partial .wf-node-label { color: var(--amber); }
+.wf-node.partial .wf-node-status { color: var(--yellow); }
+.wf-node.partial::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--yellow); }
+
+.wf-node.weak { border-color: rgba(212,120,74,0.4); background: rgba(212,120,74,0.06); }
+.wf-node.weak .wf-node-label { color: var(--orange); }
+.wf-node.weak .wf-node-status { color: var(--orange); }
+.wf-node.weak::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--orange); }
+
+@keyframes pulse { 0%,100% { border-color: var(--rule); } 50% { border-color: var(--sage); } }
+
+/* ── SCORE BARS ── */
+.score-bars { width: 100%; margin-top: 36px; display: flex; flex-direction: column; gap: 12px; }
+.score-row { display: flex; align-items: center; gap: 14px; }
+.score-row-label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); width: 100px; flex-shrink: 0; }
+.score-bar-track { flex: 1; height: 6px; background: var(--rule-faint); border-radius: 3px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 3px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+.score-bar-fill.green { background: linear-gradient(90deg, var(--sage), var(--green)); }
+.score-bar-fill.yellow { background: linear-gradient(90deg, var(--amber), var(--yellow)); }
+.score-bar-fill.orange { background: linear-gradient(90deg, #D4784A, #D4B84A); }
+.score-pct { font-size: 12px; font-weight: 700; color: var(--white); width: 36px; text-align: right; }
+
+/* ── GATE SCREEN ── */
+.gate-card {
+  width: 100%; background: var(--black2); border: 1px solid var(--rule);
+  border-radius: 14px; padding: 44px 44px 40px; position: relative; overflow: hidden;
+}
+.gate-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--sage), var(--amber));
+}
+.gate-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: var(--white); margin-bottom: 8px; }
+.gate-sub { font-size: 14px; color: var(--muted); line-height: 1.65; margin-bottom: 32px; }
+.gate-preview {
+  background: var(--black3); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 18px 20px; margin-bottom: 28px;
+  filter: blur(3px) brightness(0.5);
+  user-select: none; pointer-events: none;
+}
+.gate-preview-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.gate-preview-pill { height: 12px; border-radius: 3px; background: var(--forest-dim); }
+.f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.f-row.full { grid-template-columns: 1fr; }
+.f-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--sage); display: block; margin-bottom: 7px;
+}
+.f-input {
+  width: 100%; background: var(--black3); border: 1px solid var(--rule);
+  border-radius: 7px; padding: 12px 16px; color: var(--white);
+  font-family: 'Familjen Grotesk', sans-serif; font-size: 14px; outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.f-input:focus { border-color: var(--sage); box-shadow: 0 0 0 3px rgba(144,169,127,0.1); }
+.f-input::placeholder { color: var(--muted); }
+.f-select {
+  width: 100%; background: var(--black3); border: 1px solid var(--rule);
+  border-radius: 7px; padding: 12px 16px; color: var(--white);
+  font-family: 'Familjen Grotesk', sans-serif; font-size: 14px; outline: none;
+  cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2390A97F' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+  transition: border-color 0.2s;
+}
+.f-select:focus { border-color: var(--sage); }
+.f-select option { background: var(--black2); }
+
+/* ── RESULT SCREEN ── */
+.result-header {
+  width: 100%; padding: 36px 40px; border-radius: 14px;
+  border: 1px solid; position: relative; overflow: hidden; margin-bottom: 24px;
+  text-align: left;
+}
+.result-header.green { border-color: rgba(92,168,101,0.4); background: rgba(92,168,101,0.06); }
+.result-header.yellow { border-color: rgba(212,184,74,0.4); background: rgba(212,184,74,0.05); }
+.result-header.orange { border-color: rgba(212,120,74,0.4); background: rgba(212,120,74,0.05); }
+.result-header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.result-header.green::before { background: var(--green); }
+.result-header.yellow::before { background: var(--yellow); }
+.result-header.orange::before { background: var(--orange); }
+
+.result-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+  padding: 5px 12px; border-radius: 20px; margin-bottom: 14px;
+}
+.result-badge.green { background: rgba(92,168,101,0.15); color: var(--green); border: 1px solid rgba(92,168,101,0.3); }
+.result-badge.yellow { background: rgba(212,184,74,0.12); color: var(--yellow); border: 1px solid rgba(212,184,74,0.3); }
+.result-badge.orange { background: rgba(212,120,74,0.12); color: var(--orange); border: 1px solid rgba(212,120,74,0.3); }
+.result-badge::before { content: '●'; font-size: 7px; }
+
+.result-title { font-size: 30px; font-weight: 700; letter-spacing: -0.8px; color: var(--white); line-height: 1.1; margin-bottom: 10px; }
+.result-desc { font-size: 15px; font-weight: 400; color: var(--muted); line-height: 1.7; max-width: 600px; }
+
+.result-insight {
+  font-size: 14px; font-weight: 500; color: var(--offwhite);
+  padding: 12px 16px; background: rgba(255,255,255,0.04); border-radius: 7px;
+  border-left: 3px solid var(--amber); margin-top: 16px; line-height: 1.55;
+}
+
+/* ── GAPS GRID ── */
+.gaps-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; margin-bottom: 24px; }
+.gap-card {
+  padding: 16px; border-radius: 10px; background: var(--black2); border: 1px solid var(--rule);
+}
+.gap-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.gap-card-icon { font-size: 16px; }
+.gap-card-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--stone); }
+.gap-card-status { font-size: 13px; font-weight: 600; color: var(--offwhite); line-height: 1.3; }
+.gap-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; }
+.gap-dot.green { background: var(--green); box-shadow: 0 0 6px rgba(92,168,101,0.5); }
+.gap-dot.yellow { background: var(--yellow); box-shadow: 0 0 6px rgba(212,184,74,0.5); }
+.gap-dot.red { background: var(--orange); box-shadow: 0 0 6px rgba(212,120,74,0.5); }
+
+/* ── CTA CARDS ── */
+.cta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; width: 100%; }
+.cta-card {
+  padding: 24px 20px; background: var(--black2); border: 1px solid var(--rule);
+  border-radius: 12px; display: flex; flex-direction: column; gap: 12px;
+  transition: border-color 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.cta-card:hover { border-color: var(--forest-mid); transform: translateY(-2px); }
+.cta-card.primary { border-color: var(--amber-mid); background: rgba(244,187,110,0.04); }
+.cta-card.primary:hover { border-color: var(--amber); }
+.cta-card-icon { font-size: 24px; }
+.cta-card-title { font-size: 15px; font-weight: 700; color: var(--white); line-height: 1.3; }
+.cta-card-desc { font-size: 12px; color: var(--muted); line-height: 1.55; flex: 1; }
+.cta-card-btn {
+  font-size: 12px; font-weight: 700; color: var(--amber); letter-spacing: 0.5px;
+  display: flex; align-items: center; gap: 6px;
+}
+.cta-card.secondary .cta-card-btn { color: var(--sage); }
+.cta-card.tertiary .cta-card-btn { color: var(--stone); }
+
+/* ── PROJECT TAG ── */
+.project-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--stone); padding: 5px 12px; border: 1px solid var(--rule);
+  border-radius: 4px; background: var(--black2); margin-bottom: 24px;
+}
+
+/* ── DIVIDER ── */
+.divider { width: 100%; height: 1px; background: var(--rule); margin: 28px 0; }
+
+/* ── PILOT BANNER ── */
+.pilot-banner {
+  width: 100%; padding: 20px 24px; border-radius: 10px;
+  background: var(--forest-dim); border: 1px solid var(--forest-mid);
+  display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+}
+.pilot-banner-icon { font-size: 22px; flex-shrink: 0; }
+.pilot-banner-text { flex: 1; }
+.pilot-banner-title { font-size: 14px; font-weight: 700; color: var(--offwhite); margin-bottom: 3px; }
+.pilot-banner-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.pilot-tag {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--amber); padding: 5px 10px; background: var(--amber-dim);
+  border: 1px solid var(--amber-mid); border-radius: 4px; white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── SECTION LABELS ── */
+.section-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--sage); width: 100%; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 28px; right: 28px; z-index: 200;
+  padding: 14px 20px; background: var(--black3); border: 1px solid var(--rule);
+  border-radius: 9px; font-size: 13px; color: var(--offwhite);
+  display: flex; align-items: center; gap: 10px;
+  transform: translateY(80px); opacity: 0; transition: all 0.35s;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sage); flex-shrink: 0; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  .check-grid { grid-template-columns: 1fr; }
+  .gaps-grid, .cta-grid { grid-template-columns: 1fr; }
+  .f-row { grid-template-columns: 1fr; }
+  .workflow-diagram { flex-wrap: wrap; gap: 8px; }
+  .wf-connector { display: none; }
+  .step-title { font-size: 30px; }
+  nav { padding: 0 20px; }
+  .screen { padding: 40px 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="grid-fine"></div>
+<div class="grid-bg"></div>
+<div class="ambient"></div>
+<div class="ambient-2"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="logo-g">G</div>
+    <div class="logo-name">Grounded<span>AI</span></div>
+  </div>
+  <div class="nav-tag">Workflow Readiness Check</div>
+</nav>
+
+<!-- PROGRESS -->
+<div class="progress-bar" id="progressBar" style="display:none">
+  <div class="progress-inner">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="progress-labels">
+    <span class="progress-label" id="pl0">Project</span>
+    <span class="progress-label" id="pl1">Data</span>
+    <span class="progress-label" id="pl2">Tools</span>
+    <span class="progress-label" id="pl3">Workflow</span>
+    <span class="progress-label" id="pl4">Analysis</span>
+    <span class="progress-label" id="pl5">Results</span>
+  </div>
+</div>
+
+<div class="app-wrap">
+
+  <!-- ── SCREEN 0: INTRO ── -->
+  <div class="screen active" id="s0" style="text-align:center;padding-top:80px;">
+    <div class="eyebrow">Underground Intelligence · Free Assessment</div>
+    <h1 class="step-title" style="font-size:52px;max-width:640px;">Can your field data actually<br>support <span class="amber">decisions?</span></h1>
+    <p class="step-sub">Answer 3 quick questions about your current workflow.<br>Get an instant readiness score and integration roadmap — built for your site.</p>
+
+    <div class="project-input-wrap">
+      <input class="project-input" id="projectName" type="text"
+        placeholder="Name your project (e.g. Colorado Coal Mine)"
+        maxlength="60" oninput="updateStartBtn()"/>
+    </div>
+    <div class="project-hint">E.g. <span>TBM Hydro Project</span> · <span>Eastern Decline Development</span> · <span>Block Cave Level 7</span></div>
+
+    <button class="btn btn-amber" id="startBtn" onclick="goTo(1)" disabled>
+      Start Assessment →
+    </button>
+
+    <div style="margin-top:44px;display:flex;gap:32px;justify-content:center;flex-wrap:wrap;">
+      <div style="text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:var(--white);">3 min</div>
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;">To complete</div>
+      </div>
+      <div style="width:1px;background:var(--rule);"></div>
+      <div style="text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:var(--white);">5</div>
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;">Stage analysis</div>
+      </div>
+      <div style="width:1px;background:var(--rule);"></div>
+      <div style="text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:var(--white);">100%</div>
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;">Free · No obligation</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 1: WHAT DATA ── -->
+  <div class="screen" id="s1">
+    <div class="step-count">Step 1 of 3</div>
+    <div class="eyebrow">Data Capture</div>
+    <h2 class="step-title">What data do you <span class="amber">currently capture?</span></h2>
+    <p class="step-sub">Select everything your team collects in the field today. Don't overthink it.</p>
+
+    <div class="check-grid" id="dataGrid">
+      <label class="check-item" onclick="toggleCheck(this,'data','photos')">
+        <div class="check-box"></div>
+        <div class="check-label">Photos<small>Site documentation images</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'data','notes')">
+        <div class="check-box"></div>
+        <div class="check-label">Field Notes<small>Written logs and shift records</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'data','2d')">
+        <div class="check-box"></div>
+        <div class="check-label">2D Scans<small>LiDAR or iPad-based flat capture</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'data','3d')">
+        <div class="check-box"></div>
+        <div class="check-label">3D Scans<small>LiDAR or photogrammetry point clouds</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'data','structural')">
+        <div class="check-box"></div>
+        <div class="check-label">Structural Mapping<small>Joint sets, fault zones, rock mass</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'data','ground')">
+        <div class="check-box"></div>
+        <div class="check-label">Ground Support Records<small>Bolt loads, shotcrete, mesh coverage</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'data','shift')">
+        <div class="check-box"></div>
+        <div class="check-label">Shift-Based Reports<small>End-of-shift summaries and sign-offs</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'data','none')">
+        <div class="check-box"></div>
+        <div class="check-label">None yet<small>Just getting started</small></div>
+      </label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goTo(0)">← Back</button>
+      <button class="btn btn-amber" id="nextS1" onclick="goTo(2)" disabled>Next: Tools Used →</button>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 2: TOOLS ── -->
+  <div class="screen" id="s2">
+    <div class="step-count">Step 2 of 3</div>
+    <div class="eyebrow">Current Tools</div>
+    <h2 class="step-title">What tools do <span class="amber">you currently use?</span></h2>
+    <p class="step-sub">Select all platforms, software, or methods your team relies on day-to-day.</p>
+
+    <div class="check-grid" id="toolGrid">
+      <label class="check-item" onclick="toggleCheck(this,'tools','deswik')">
+        <div class="check-box"></div>
+        <div class="check-label">Deswik<small>Mine planning & scheduling</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'tools','leapfrog')">
+        <div class="check-box"></div>
+        <div class="check-label">Seequent / Leapfrog<small>Geological modelling</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'tools','other_model')">
+        <div class="check-box"></div>
+        <div class="check-label">Other Modelling Software<small>Surpac, Vulcan, MineSight etc.</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'tools','excel')">
+        <div class="check-box"></div>
+        <div class="check-label">Excel / Spreadsheets<small>Manual data tracking</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'tools','pdf')">
+        <div class="check-box"></div>
+        <div class="check-label">PDF Reports<small>Static exported documents</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'tools','cad')">
+        <div class="check-box"></div>
+        <div class="check-label">CAD<small>AutoCAD, MicroStation, etc.</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'tools','sharepoint')">
+        <div class="check-box"></div>
+        <div class="check-label">SharePoint / Folders<small>Internal file storage</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'tools','none')">
+        <div class="check-box"></div>
+        <div class="check-label">Nothing Structured<small>Ad-hoc or verbal handoffs</small></div>
+      </label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goTo(1)">← Back</button>
+      <button class="btn btn-amber" id="nextS2" onclick="goTo(3)" disabled>Next: Workflow Management →</button>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 3: WORKFLOW ── -->
+  <div class="screen" id="s3">
+    <div class="step-count">Step 3 of 3</div>
+    <div class="eyebrow">Workflow Maturity</div>
+    <h2 class="step-title">How is your workflow <span class="amber">managed?</span></h2>
+    <p class="step-sub">Pick all that describe how work is assigned, tracked, and reported at your site.</p>
+
+    <div class="check-grid" id="workflowGrid">
+      <label class="check-item" onclick="toggleCheck(this,'workflow','no_formal')">
+        <div class="check-box"></div>
+        <div class="check-label">No formal task assignment<small>Work flows verbally or ad-hoc</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'workflow','shift_check')">
+        <div class="check-box"></div>
+        <div class="check-label">Shift-based checklist<small>Per-shift paper or digital checklists</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'workflow','site_plan')">
+        <div class="check-box"></div>
+        <div class="check-label">Structured site plan<small>Weekly/fortnightly planning cycles</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'workflow','dashboard')">
+        <div class="check-box"></div>
+        <div class="check-label">Centralised dashboard<small>Live visibility across teams</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'workflow','manual_reports')">
+        <div class="check-box"></div>
+        <div class="check-label">Reports generated manually<small>Compiled by hand after each shift</small></div>
+      </label>
+      <label class="check-item" onclick="toggleCheck(this,'workflow','auto_reports')">
+        <div class="check-box"></div>
+        <div class="check-label">Reports generated automatically<small>System-driven output</small></div>
+      </label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goTo(2)">← Back</button>
+      <button class="btn btn-amber" id="nextS3" onclick="runCalculation()" disabled>Analyse My Workflow →</button>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 4: CALCULATION ── -->
+  <div class="screen" id="s4">
+    <div class="calc-container">
+      <div class="eyebrow" id="calcProjectTag">Analysing Project</div>
+      <h2 class="calc-title">Building your Workflow Snapshot</h2>
+      <p class="calc-sub">Mapping your data, tools, and maturity against the GroundedAI pipeline…</p>
+
+      <div class="workflow-diagram" id="wfDiagram">
+        <div class="wf-node scoring" id="wn-plan">
+          <div class="wf-node-label">Plan</div>
+          <div class="wf-node-icon">📐</div>
+          <div class="wf-node-status" id="wns-plan">—</div>
+        </div>
+        <div class="wf-connector"></div>
+        <div class="wf-node scoring" id="wn-capture">
+          <div class="wf-node-label">Capture</div>
+          <div class="wf-node-icon">📡</div>
+          <div class="wf-node-status" id="wns-capture">—</div>
+        </div>
+        <div class="wf-connector"></div>
+        <div class="wf-node scoring" id="wn-map">
+          <div class="wf-node-label">Map</div>
+          <div class="wf-node-icon">🗺</div>
+          <div class="wf-node-status" id="wns-map">—</div>
+        </div>
+        <div class="wf-connector"></div>
+        <div class="wf-node scoring" id="wn-decide">
+          <div class="wf-node-label">Decide</div>
+          <div class="wf-node-icon">⚡</div>
+          <div class="wf-node-status" id="wns-decide">—</div>
+        </div>
+        <div class="wf-connector"></div>
+        <div class="wf-node scoring" id="wn-share">
+          <div class="wf-node-label">Share</div>
+          <div class="wf-node-icon">📤</div>
+          <div class="wf-node-status" id="wns-share">—</div>
+        </div>
+      </div>
+
+      <div class="score-bars" id="scoreBars">
+        <div class="score-row">
+          <div class="score-row-label">Data Quality</div>
+          <div class="score-bar-track"><div class="score-bar-fill green" id="sb-data"></div></div>
+          <div class="score-pct" id="sp-data">0%</div>
+        </div>
+        <div class="score-row">
+          <div class="score-row-label">Tool Maturity</div>
+          <div class="score-bar-track"><div class="score-bar-fill yellow" id="sb-tools"></div></div>
+          <div class="score-pct" id="sp-tools">0%</div>
+        </div>
+        <div class="score-row">
+          <div class="score-row-label">Workflow</div>
+          <div class="score-bar-track"><div class="score-bar-fill orange" id="sb-workflow"></div></div>
+          <div class="score-pct" id="sp-workflow">0%</div>
+        </div>
+        <div class="score-row">
+          <div class="score-row-label">Integration</div>
+          <div class="score-bar-track"><div class="score-bar-fill green" id="sb-integration"></div></div>
+          <div class="score-pct" id="sp-integration">0%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 5: LEAD GATE ── -->
+  <div class="screen" id="s5">
+    <div class="eyebrow">Almost There</div>
+    <h2 class="step-title" style="font-size:34px;text-align:center;margin-bottom:10px;">Your full breakdown is ready.</h2>
+    <p class="step-sub" style="margin-bottom:28px;">Enter your details below to unlock your personalised workflow assessment, integration map, and recommended next steps for <strong id="gateProjectName" style="color:var(--white)"></strong>.</p>
+
+    <div class="gate-card" style="width:100%;">
+      <!-- blurred preview -->
+      <div class="gate-preview" aria-hidden="true">
+        <div class="gate-preview-row">
+          <div class="gate-preview-pill" style="width:60%"></div>
+          <div class="gate-preview-pill" style="width:25%"></div>
+        </div>
+        <div class="gate-preview-row">
+          <div class="gate-preview-pill" style="width:80%"></div>
+        </div>
+        <div class="gate-preview-row">
+          <div class="gate-preview-pill" style="width:45%"></div>
+          <div class="gate-preview-pill" style="width:40%"></div>
+        </div>
+      </div>
+
+      <div class="f-row">
+        <div>
+          <label class="f-label">First Name</label>
+          <input class="f-input" id="gFirst" type="text" placeholder="Jane" oninput="checkGateForm()"/>
+        </div>
+        <div>
+          <label class="f-label">Last Name</label>
+          <input class="f-input" id="gLast" type="text" placeholder="Smith" oninput="checkGateForm()"/>
+        </div>
+      </div>
+      <div class="f-row full">
+        <label class="f-label">Work Email</label>
+        <input class="f-input" id="gEmail" type="email" placeholder="jane@miningco.com" oninput="checkGateForm()"/>
+      </div>
+      <div class="f-row">
+        <div>
+          <label class="f-label">Role</label>
+          <select class="f-select" id="gRole" onchange="checkGateForm()">
+            <option value="">Select your role…</option>
+            <option>Geologist</option>
+            <option>Tunnel Engineer</option>
+            <option>Project Manager</option>
+            <option>Mine Manager</option>
+            <option>Safety Officer</option>
+            <option>Surveyor</option>
+            <option>Geotech Consultant</option>
+            <option>Asset Owner / Director</option>
+            <option>Legal / Claims</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="f-label">Industry</label>
+          <select class="f-select" id="gIndustry" onchange="checkGateForm()">
+            <option value="">Select industry…</option>
+            <option>Hard Rock Mining</option>
+            <option>Coal Mining</option>
+            <option>Tunnelling / Civil</option>
+            <option>Infrastructure</option>
+            <option>Consulting / Geotech</option>
+            <option>Government / Regulator</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="f-row full">
+        <label class="f-label">Company Name</label>
+        <input class="f-input" id="gCompany" type="text" placeholder="Your company" oninput="checkGateForm()"/>
+      </div>
+
+      <button class="btn btn-amber" id="gateSubmit" onclick="submitGate()" disabled style="width:100%;margin-top:4px;padding:16px;font-size:15px;justify-content:center;">
+        Unlock My Workflow Summary →
+      </button>
+      <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5;">We'll send your full PDF summary to your email. No spam, ever. You can unsubscribe at any time.</p>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 6: RESULTS ── -->
+  <div class="screen" id="s6">
+    <!-- Dynamic content injected by JS -->
+  </div>
+
+</div><!-- /app-wrap -->
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-dot"></div>
+  <span id="toastMsg">Saved</span>
+</div>
+
+<script>
+// ── STATE ──
+const state = {
+  project: '',
+  data: new Set(),
+  tools: new Set(),
+  workflow: new Set(),
+  scores: {},
+  tier: '',
+  name: '',
+  email: ''
+};
+
+// ── NAVIGATION ──
+function goTo(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s' + n).classList.add('active');
+  document.getElementById('s' + n).style.animation = 'none';
+  requestAnimationFrame(() => {
+    document.getElementById('s' + n).style.animation = '';
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  updateProgress(n);
+}
+
+function updateProgress(step) {
+  const bar = document.getElementById('progressBar');
+  bar.style.display = step === 0 ? 'none' : 'block';
+
+  const pcts = [0, 20, 40, 60, 80, 100];
+  document.getElementById('progressFill').style.width = pcts[step] + '%';
+
+  const labels = ['pl0','pl1','pl2','pl3','pl4','pl5'];
+  labels.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.className = 'progress-label';
+    if (i < step) el.classList.add('done');
+    else if (i === step) el.classList.add('active');
+  });
+}
+
+// ── PROJECT NAME ──
+document.getElementById('projectName').addEventListener('input', function() {
+  state.project = this.value.trim();
+  updateStartBtn();
+});
+function updateStartBtn() {
+  document.getElementById('startBtn').disabled = state.project.length < 3;
+}
+
+// ── CHECKBOX TOGGLE ──
+function toggleCheck(el, category, value) {
+  el.classList.toggle('selected');
+  const set = state[category];
+  if (set.has(value)) set.delete(value); else set.add(value);
+
+  // mutual exclusivity for "none"
+  if (value === 'none' && set.has(value)) {
+    document.querySelectorAll(`#${category === 'data' ? 'dataGrid' : category === 'tools' ? 'toolGrid' : 'workflowGrid'} .check-item`)
+      .forEach(item => {
+        if (item !== el) {
+          item.classList.remove('selected');
+          const v = item.getAttribute('onclick').match(/'([^']+)'\)$/)?.[1];
+          if (v) state[category].delete(v);
+        }
+      });
+  } else if (value !== 'none') {
+    // deselect none if something else picked
+    const gridId = category === 'data' ? 'dataGrid' : category === 'tools' ? 'toolGrid' : 'workflowGrid';
+    document.querySelectorAll(`#${gridId} .check-item`).forEach(item => {
+      const v = item.getAttribute('onclick').match(/'([^']+)'\)$/)?.[1];
+      if (v === 'none') { item.classList.remove('selected'); state[category].delete('none'); }
+    });
+  }
+
+  // update next buttons
+  const nextBtns = { data: 'nextS1', tools: 'nextS2', workflow: 'nextS3' };
+  if (nextBtns[category]) {
+    document.getElementById(nextBtns[category]).disabled = state[category].size === 0;
+  }
+}
+
+// ── SCORING ENGINE ──
+function calcScores() {
+  const d = state.data;
+  const t = state.tools;
+  const w = state.workflow;
+
+  // DATA SCORE (0-100)
+  let dataScore = 0;
+  if (d.has('none')) dataScore = 0;
+  else {
+    if (d.has('photos')) dataScore += 10;
+    if (d.has('notes')) dataScore += 10;
+    if (d.has('2d')) dataScore += 20;
+    if (d.has('3d')) dataScore += 35;
+    if (d.has('structural')) dataScore += 15;
+    if (d.has('ground')) dataScore += 10;
+    if (d.has('shift')) dataScore += 10;
+  }
+  dataScore = Math.min(100, dataScore);
+
+  // TOOL SCORE (0-100)
+  let toolScore = 0;
+  if (t.has('none')) toolScore = 0;
+  else {
+    if (t.has('deswik')) toolScore += 35;
+    if (t.has('leapfrog')) toolScore += 35;
+    if (t.has('other_model')) toolScore += 25;
+    if (t.has('cad')) toolScore += 15;
+    if (t.has('excel')) toolScore += 5;
+    if (t.has('pdf')) toolScore += 5;
+    if (t.has('sharepoint')) toolScore += 5;
+  }
+  toolScore = Math.min(100, toolScore);
+
+  // WORKFLOW SCORE (0-100)
+  let wfScore = 0;
+  if (w.has('no_formal')) wfScore = 0;
+  else {
+    if (w.has('shift_check')) wfScore += 20;
+    if (w.has('site_plan')) wfScore += 25;
+    if (w.has('dashboard')) wfScore += 30;
+    if (w.has('manual_reports')) wfScore += 10;
+    if (w.has('auto_reports')) wfScore += 30;
+  }
+  wfScore = Math.min(100, wfScore);
+
+  // INTEGRATION SCORE
+  const integrationScore = Math.round((
+    (t.has('deswik') || t.has('leapfrog') || t.has('other_model') ? 40 : 0) +
+    (d.has('3d') || d.has('2d') ? 40 : 0) +
+    (w.has('dashboard') || w.has('auto_reports') ? 20 : 0)
+  ));
+
+  state.scores = { data: dataScore, tools: toolScore, workflow: wfScore, integration: integrationScore };
+
+  // TIER (total weighted)
+  const total = (dataScore * 0.35) + (toolScore * 0.3) + (wfScore * 0.25) + (integrationScore * 0.1);
+  if (total >= 60) state.tier = 'green';
+  else if (total >= 30) state.tier = 'yellow';
+  else state.tier = 'orange';
+
+  return state.scores;
+}
+
+function stageRating(score) {
+  if (score >= 70) return 'strong';
+  if (score >= 35) return 'partial';
+  return 'weak';
+}
+function stageLabel(score) {
+  if (score >= 70) return '✔ Strong';
+  if (score >= 35) return '⚠ Partial';
+  return '✗ Gap';
+}
+
+// ── PIPELINE STAGE SCORES ──
+function getPipelineScores() {
+  const d = state.data, t = state.tools, w = state.workflow;
+  return {
+    plan: w.has('site_plan') || w.has('dashboard') ? 70 : w.has('shift_check') ? 40 : 15,
+    capture: (d.has('3d') ? 90 : d.has('2d') ? 65 : d.has('photos') || d.has('notes') ? 35 : 5),
+    map: (t.has('leapfrog') || t.has('other_model') ? 80 : t.has('cad') ? 50 : t.has('excel') ? 25 : 10),
+    decide: (w.has('dashboard') ? 80 : w.has('site_plan') ? 55 : w.has('shift_check') ? 30 : 10),
+    share: (w.has('auto_reports') ? 85 : w.has('manual_reports') ? 45 : t.has('pdf') ? 25 : 10)
+  };
+}
+
+// ── CALCULATION ANIMATION ──
+function runCalculation() {
+  goTo(4);
+  document.getElementById('calcProjectTag').textContent = '→ ' + state.project;
+
+  const scores = calcScores();
+  const pipeline = getPipelineScores();
+
+  const stages = ['plan','capture','map','decide','share'];
+  const delays = [600, 1200, 1800, 2400, 3000];
+
+  stages.forEach((stage, i) => {
+    setTimeout(() => {
+      const node = document.getElementById('wn-' + stage);
+      const label = document.getElementById('wns-' + stage);
+      const rating = stageRating(pipeline[stage]);
+      node.classList.remove('scoring');
+      node.classList.add(rating);
+      node.classList.add('revealed');
+      label.textContent = stageLabel(pipeline[stage]);
+    }, delays[i]);
+  });
+
+  // Animate bars
+  setTimeout(() => {
+    animateBar('sb-data', 'sp-data', scores.data);
+    animateBar('sb-tools', 'sp-tools', scores.tools);
+    animateBar('sb-workflow', 'sp-workflow', scores.workflow);
+    animateBar('sb-integration', 'sp-integration', scores.integration);
+  }, 3200);
+
+  // Move to gate
+  setTimeout(() => {
+    document.getElementById('gateProjectName').textContent = state.project;
+    goTo(5);
+  }, 5000);
+}
+
+function animateBar(fillId, pctId, target) {
+  const fill = document.getElementById(fillId);
+  const pct = document.getElementById(pctId);
+  fill.style.width = target + '%';
+  let current = 0;
+  const step = target / 40;
+  const timer = setInterval(() => {
+    current = Math.min(current + step, target);
+    pct.textContent = Math.round(current) + '%';
+    if (current >= target) clearInterval(timer);
+  }, 30);
+}
+
+// ── GATE FORM ──
+function checkGateForm() {
+  const ok = document.getElementById('gFirst').value.trim() &&
+             document.getElementById('gLast').value.trim() &&
+             /\S+@\S+\.\S+/.test(document.getElementById('gEmail').value) &&
+             document.getElementById('gRole').value &&
+             document.getElementById('gIndustry').value &&
+             document.getElementById('gCompany').value.trim();
+  document.getElementById('gateSubmit').disabled = !ok;
+}
+
+function submitGate() {
+  state.name = document.getElementById('gFirst').value + ' ' + document.getElementById('gLast').value;
+  state.email = document.getElementById('gEmail').value;
+  buildResults();
+  goTo(6);
+  showToast('📧 Summary sent to ' + state.email);
+}
+
+// ── BUILD RESULTS ──
+function buildResults() {
+  const container = document.getElementById('s6');
+  const { tier, scores, project, name } = state;
+  const pipeline = getPipelineScores();
+
+  const firstName = name.split(' ')[0];
+
+  const configs = {
+    green: {
+      cls: 'green', badge: '🟢 Extremely Compatible',
+      title: 'You\'re ready to deploy.',
+      desc: `${firstName}, your site already captures structured data and uses compatible tools. GroundedAI can integrate with minimal workflow change — most teams are up and running within 2–4 weeks. The hard work is already done.`,
+      insight: `Your use of ${state.tools.has('deswik') ? 'Deswik' : state.tools.has('leapfrog') ? 'Leapfrog' : 'modelling software'} puts you ahead of 80% of sites we assess. Integration focuses on closing the loop between field capture and planning — eliminating manual handoffs.`,
+      pilotTitle: null,
+      ctaPrimary: { icon: '📋', title: 'See How Other Sites Implemented', desc: 'Read the journey of a similar project. Share it with your team.', btn: 'View Case Studies →' },
+      ctaSecond: { icon: '📅', title: 'Book a Demo with Our Site Experts', desc: 'See live how GroundedAI slots into your current pipeline.', btn: 'Book 20-min Review →' },
+      ctaThird: { icon: '📄', title: 'Download Your PDF Summary', desc: 'Full breakdown sent to your email. Share with your manager.', btn: 'Check Your Inbox →' }
+    },
+    yellow: {
+      cls: 'yellow', badge: '🟡 Compatible',
+      title: 'Strong foundation. Fragmented workflows.',
+      desc: `${firstName}, you're capturing solid data — but it's moving through disconnected tools and manual steps. GroundedAI's reporting layer would centralise and automate what your team is already doing, cutting alignment time significantly.`,
+      insight: 'The biggest opportunity on your site is closing the gap between structured field capture and decision-ready reporting. Right now, that work is manual — and it introduces delays and defensibility risk.',
+      pilotTitle: { title: 'Early Adopter Pilot Program', desc: 'Work directly with our team to validate GroundedAI on your site. First-adopter sites receive a $5,000 discount on their annual license.', tag: 'SAVE $5K' },
+      ctaPrimary: { icon: '🎥', title: 'Recommended: Watch This First', desc: 'A 6-minute walkthrough targeted at your specific workflow gaps.', btn: 'Watch Workflow Overview →' },
+      ctaSecond: { icon: '📅', title: 'Book a Demo', desc: 'Bring your data gaps — we\'ll show you exactly where GroundedAI closes them.', btn: 'Book 20-min Review →' },
+      ctaThird: { icon: '📄', title: 'Download Your PDF Summary', desc: 'Full breakdown with personalised integration recommendations.', btn: 'Check Your Inbox →' }
+    },
+    orange: {
+      cls: 'orange', badge: '🟠 High Potential',
+      title: 'Valuable data. Significant opportunity.',
+      desc: `${firstName}, your team is collecting real-world ground data — but it's scattered across folders, manual reports, and siloed tools. There's significant time and defensibility value to be recovered by structuring how that data flows.`,
+      insight: 'Sites at this stage typically spend 4–8 hours per week on report compilation that GroundedAI can automate. More critically, undocumented field conditions are the leading cause of DSC disputes — and those cost far more than the platform.',
+      pilotTitle: { title: 'Workflow Transformation Program', desc: 'We work with you to map and restructure your data flow from the ground up. No commitment required to start.', tag: 'FREE SCOPING' },
+      ctaPrimary: { icon: '🔭', title: 'Explore Workflow Transformation', desc: 'High-level platform walkthrough showing how GroundedAI transforms decision-making underground.', btn: 'Watch Platform Tour →' },
+      ctaSecond: { icon: '📅', title: 'Book a Workflow Review', desc: 'A 20-minute deep dive with one of our underground specialists. Bring your current process.', btn: 'Book Your Free Review →' },
+      ctaThird: { icon: '📄', title: 'Download Your PDF Summary', desc: 'Your full assessment with a prioritised list of improvements.', btn: 'Check Your Inbox →' }
+    }
+  };
+
+  const c = configs[tier];
+
+  const gapData = [
+    { icon: '📐', label: 'Plan', score: pipeline.plan },
+    { icon: '📡', label: 'Capture', score: pipeline.capture },
+    { icon: '🗺', label: 'Map', score: pipeline.map },
+    { icon: '⚡', label: 'Decide', score: pipeline.decide },
+    { icon: '📤', label: 'Share', score: pipeline.share }
+  ];
+
+  const gapCards = gapData.map(g => {
+    const r = stageRating(g.score);
+    const dot = r === 'strong' ? 'green' : r === 'partial' ? 'yellow' : 'red';
+    const status = r === 'strong' ? 'Fully covered' : r === 'partial' ? 'Partial coverage' : 'Gap identified';
+    return `
+      <div class="gap-card">
+        <div class="gap-card-top">
+          <div class="gap-dot ${dot}"></div>
+          <div class="gap-card-label">${g.label}</div>
+          <div style="font-size:16px;margin-left:auto;">${g.icon}</div>
+        </div>
+        <div class="gap-card-status">${status}</div>
+      </div>`;
+  }).join('');
+
+  const pilotHtml = c.pilotTitle ? `
+    <div class="pilot-banner">
+      <div class="pilot-banner-icon">🚀</div>
+      <div class="pilot-banner-text">
+        <div class="pilot-banner-title">${c.pilotTitle.title}</div>
+        <div class="pilot-banner-desc">${c.pilotTitle.desc}</div>
+      </div>
+      <div class="pilot-tag">${c.pilotTitle.tag}</div>
+    </div>` : '';
+
+  container.innerHTML = `
+    <div class="project-tag">📍 ${project}</div>
+
+    <div class="result-header ${c.cls}" style="width:100%;">
+      <div class="result-badge ${c.cls}">${c.badge}</div>
+      <div class="result-title">${c.title}</div>
+      <div class="result-desc">${c.desc}</div>
+      <div class="result-insight">${c.insight}</div>
+    </div>
+
+    <div class="section-label" style="margin-bottom:14px;">Pipeline Readiness</div>
+    <div class="gaps-grid">${gapCards}</div>
+
+    <div class="divider"></div>
+    <div class="section-label">Recommended Next Steps</div>
+
+    ${pilotHtml}
+
+    <div class="cta-grid" style="margin-bottom:32px;">
+      <div class="cta-card primary" onclick="showToast('Opening booking calendar…')">
+        <div class="cta-card-icon">${c.ctaPrimary.icon}</div>
+        <div class="cta-card-title">${c.ctaPrimary.title}</div>
+        <div class="cta-card-desc">${c.ctaPrimary.desc}</div>
+        <div class="cta-card-btn">${c.ctaPrimary.btn} <span>↗</span></div>
+      </div>
+      <div class="cta-card secondary" onclick="showToast('Opening booking calendar…')">
+        <div class="cta-card-icon">${c.ctaSecond.icon}</div>
+        <div class="cta-card-title">${c.ctaSecond.title}</div>
+        <div class="cta-card-desc">${c.ctaSecond.desc}</div>
+        <div class="cta-card-btn">${c.ctaSecond.btn} <span>↗</span></div>
+      </div>
+      <div class="cta-card tertiary" onclick="showToast('Summary delivered to your inbox!')">
+        <div class="cta-card-icon">${c.ctaThird.icon}</div>
+        <div class="cta-card-title">${c.ctaThird.title}</div>
+        <div class="cta-card-desc">${c.ctaThird.desc}</div>
+        <div class="cta-card-btn">${c.ctaThird.btn} <span>↗</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;border-top:1px solid var(--rule);padding-top:28px;width:100%;">
+      <button class="btn btn-amber" onclick="showToast('Opening booking calendar…')">📅 Book a 20-Min Workflow Review</button>
+      <button class="btn btn-sage" onclick="showToast('Downloading PDF…')">⬇ Download PDF Summary</button>
+      <button class="btn btn-ghost" onclick="restartTool()">↺ Restart Assessment</button>
+    </div>
+
+    <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:20px;line-height:1.6;">
+      Assessment completed for <strong style="color:var(--stone)">${project}</strong> · Questions? <span style="color:var(--sage);cursor:pointer;" onclick="showToast('Opening contact form…')">Contact our team</span>
+    </p>`;
+}
+
+// ── RESTART ──
+function restartTool() {
+  state.data.clear();
+  state.tools.clear();
+  state.workflow.clear();
+  state.project = '';
+  state.scores = {};
+  state.tier = '';
+  document.getElementById('projectName').value = '';
+  document.querySelectorAll('.check-item.selected').forEach(el => el.classList.remove('selected'));
+  document.getElementById('gFirst').value = '';
+  document.getElementById('gLast').value = '';
+  document.getElementById('gEmail').value = '';
+  document.getElementById('gRole').value = '';
+  document.getElementById('gIndustry').value = '';
+  document.getElementById('gCompany').value = '';
+  document.getElementById('nextS1').disabled = true;
+  document.getElementById('nextS2').disabled = true;
+  document.getElementById('nextS3').disabled = true;
+  document.getElementById('gateSubmit').disabled = true;
+
+  // reset wf nodes
+  ['plan','capture','map','decide','share'].forEach(s => {
+    const n = document.getElementById('wn-' + s);
+    n.className = 'wf-node scoring';
+    document.getElementById('wns-' + s).textContent = '—';
+    document.getElementById('wns-' + s).style.opacity = 0;
+  });
+  // reset bars
+  ['sb-data','sb-tools','sb-workflow','sb-integration'].forEach(id => {
+    document.getElementById(id).style.width = '0%';
+  });
+  ['sp-data','sp-tools','sp-workflow','sp-integration'].forEach(id => {
+    document.getElementById(id).textContent = '0%';
+  });
+
+  goTo(0);
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+</script>
+</body>
+</html>
